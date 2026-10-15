@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Penguilz Dev | Minecraft Skript & Java Plugin Developer</title>
+<meta name="description" content="Penguilz Dev builds Skript scripts, Paper plugins, dynamic GUIs, and real-time HUD systems for competitive Minecraft servers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0b10;
+    --panel: #12141d;
+    --panel-2: #161923;
+    --accent: #b21dff;
+    --accent-hi: #c45cff;
+    --text: #f8fafc;
+    --muted: #8b93a7;
+    --line: rgba(255, 255, 255, 0.08);
+    --line-strong: rgba(255, 255, 255, 0.14);
+    --green: #22c55e;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; scroll-padding-top: 88px; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Ambient grid, faded toward the bottom */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: linear-gradient(to bottom, #000 0%, transparent 60%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 60%);
+    opacity: 0.45;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    width: min(1120px, 100% - 48px);
+    margin-inline: auto;
+  }
+
+  h1, h2, h3, .display {
+    font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+  }
+
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent-hi); outline-offset: 3px; border-radius: 6px; }
+
+  /* NAV */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(10, 11, 16, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 68px;
+  }
+  .logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    text-decoration: none;
+    letter-spacing: -0.01em;
+    text-shadow: 0 0 18px rgba(178, 29, 255, 0.55);
+  }
+  .logo span { color: var(--accent-hi); }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 6px 13px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--panel);
+  }
+  .dot {
+    position: relative;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+  }
+  .dot::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--green);
+    animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+  @keyframes ping {
+    0%   { transform: scale(1); opacity: 0.6; }
+    80%, 100% { transform: scale(3); opacity: 0; }
+  }
+
+  /* HERO */
+  .hero {
+    padding: 120px 0 104px;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-inner { max-width: 760px; }
+  .kicker {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 22px;
+  }
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 4.1rem);
+    font-weight: 700;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent-hi);
+  }
+  .hero p {
+    margin-top: 24px;
+    max-width: 580px;
+    font-size: 1.08rem;
+    color: var(--muted);
+  }
+  .actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 36px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 0.98rem;
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 6px 24px rgba(178, 29, 255, 0.28);
+  }
+  .btn-primary:hover { background: #9c17e0; transform: translateY(-1px); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border-color: var(--line-strong);
+  }
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.3); }
+
+  /* SECTIONS */
+  section { padding: 88px 0; position: relative; z-index: 1; }
+  .divider { border-top: 1px solid var(--line); }
+  .section-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 44px;
+  }
+  .section-head h2 {
+    font-size: clamp(1.8rem, 3.6vw, 2.4rem);
+    font-weight: 700;
+  }
+  .section-head p {
+    color: var(--muted);
+    max-width: 440px;
+    font-size: 0.98rem;
+  }
+
+  /* PRICING */
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    display: flex;
+    flex-direction: column;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 30px 28px 28px;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+  }
+  .card:hover {
+    border-color: rgba(178, 29, 255, 0.55);
+    box-shadow: 0 0 40px rgba(178, 29, 255, 0.16);
+    transform: translateY(-3px);
+  }
+  .tier {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .card h3 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-top: 8px;
+  }
+  .price {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 20px 0 22px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--line);
+  }
+  .price small {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--muted);
+    margin-left: 6px;
+  }
+  .card ul {
+    list-style: none;
+    display: grid;
+    gap: 11px;
+  }
+  .card li {
+    position: relative;
+    padding-left: 22px;
+    color: #c3c9d7;
+    font-size: 0.95rem;
+  }
+  .card li::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 0.62em;
+    width: 8px;
+    height: 2px;
+    background: var(--accent-hi);
+  }
+
+  /* SHOWCASE */
+  .project {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 52px 48px;
+  }
+  .project-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+  }
+  .project h2 {
+    font-size: clamp(1.7rem, 3.4vw, 2.2rem);
+    font-weight: 700;
+  }
+  .project-top p {
+    color: var(--muted);
+    max-width: 380px;
+    font-size: 0.98rem;
+  }
+  .tag {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-hi);
+    border: 1px solid rgba(178, 29, 255, 0.4);
+    border-radius: 6px;
+    padding: 4px 9px;
+    margin-bottom: 16px;
+  }
+  .feature {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 26px 24px;
+    transition: border-color 0.25s ease;
+  }
+  .feature:hover { border-color: var(--line-strong); }
+  .feature .num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 18px;
+  }
+  .feature h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .feature .sub {
+    color: var(--accent-hi);
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 14px;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .feature ul { list-style: none; display: grid; gap: 8px; }
+  .feature li {
+    color: var(--muted);
+    font-size: 0.93rem;
+    padding-left: 16px;
+    position: relative;
+  }
+  .feature li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.65em;
+    width: 6px;
+    height: 1px;
+    background: var(--muted);
+  }
+  .keys {
+    display: inline-block;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    color: var(--text);
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 2px 8px;
+    margin-top: 6px;
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 30px 0;
+    color: var(--muted);
+    font-size: 0.86rem;
+    position: relative;
+    z-index: 1;
+  }
+  .foot-inner {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* MODAL */
+  .modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(5, 6, 10, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  .modal.open { display: flex; animation: fadeIn 0.25s ease-out; }
+  .modal.open .modal-box { animation: popIn 0.38s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes popIn {
+    from { opacity: 0; transform: translateY(14px) scale(0.92); }
+    to   { opacity: 1; transform: none; }
+  }
+  .modal-box {
+    width: min(440px, 100%);
+    background: var(--panel);
+    border: 1px solid var(--line-strong);
+    border-radius: 16px;
+    padding: 30px 28px;
+    position: relative;
+  }
+  .modal-box h3 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .modal-box > p {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 22px;
+  }
+  .steps {
+    list-style: none;
+    display: grid;
+    gap: 12px;
+    margin-bottom: 26px;
+    counter-reset: step;
+  }
+  .steps li {
+    counter-increment: step;
+    display: flex;
+    gap: 14px;
+    align-items: start;
+    font-size: 0.95rem;
+    color: #c3c9d7;
+  }
+  .steps li::before {
+    content: counter(step);
+    flex: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid var(--line-strong);
+    display: grid;
+    place-items: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .discord-line {
+    font-size: 0.92rem;
+    color: var(--muted);
+    margin-bottom: 22px;
+  }
+  .discord-line a { color: var(--accent-hi); }
+  .close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .close:hover { color: var(--text); border-color: var(--line-strong); }
+
+  @media (max-width: 720px) {
+    .wrap { width: min(1120px, 100% - 32px); }
+    .hero { padding: 80px 0 72px; }
+    section { padding: 68px 0; }
+    .project { padding: 32px 22px; }
+    .nav-inner { height: 60px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-inner">
+    <a href="#top" class="logo" id="top">Penguilz<span> Dev</span></a>
+    <div class="status" role="status">
+      <span class="dot" aria-hidden="true"></span>
+      <span>Commissions Open</span>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-inner">
+      <span class="kicker">Skript &middot; Paper &middot; Java</span>
+      <h1>High-Performance Minecraft Systems &amp; <em>Mechanics</em></h1>
+      <p>Specialized in custom Skript development, Paper plugins, dynamic GUIs, and real-time HUD engines for competitive servers.</p>
+      <div class="actions">
+        <button class="btn btn-primary" data-open-modal>Order via Discord</button>
+        <a href="#work" class="btn btn-ghost">View proof of work</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="pricing" class="divider">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Pricing</h2>
+      <p>Starting prices for each tier. Final quotes are confirmed after we scope your server's needs.</p>
+    </div>
+
+    <div class="grid-3">
+      <article class="card">
+        <span class="tier">Tier 01</span>
+        <h3>Simple Features</h3>
+        <div class="price">£5 &ndash; £10</div>
+        <ul>
+          <li>Custom administrative commands</li>
+          <li>Utility scripts</li>
+          <li>Basic inventory menus</li>
+          <li>Bug fixes</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <span class="tier">Tier 02</span>
+        <h3>Custom Mechanics</h3>
+        <div class="price">£15 &ndash; £35</div>
+        <ul>
+          <li>Multi-tiered GUIs</li>
+          <li>Action-bar HUD cooldown engines</li>
+          <li>Custom combat abilities</li>
+          <li>Dash vectors</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <span class="tier">Tier 03</span>
+        <h3>Full Server Suite</h3>
+        <div class="price">£35 &ndash; £50</div>
+        <ul>
+          <li>Complete FFA / Practice kit setup</li>
+          <li>LuckPerms and TAB integration</li>
+          <li>Core mechanics</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="work" class="divider">
+  <div class="wrap">
+    <div class="project">
+      <div class="project-top">
+        <div>
+          <span class="tag">Proof of Work</span>
+          <h2>Rift FFA</h2>
+        </div>
+        <p>Demonstrated capabilities from the custom weapon and kit layout system.</p>
+      </div>
+
+      <div class="grid-3">
+        <div class="feature">
+          <span class="num">01</span>
+          <h3>/ffa</h3>
+          <div class="sub">OP-only command</div>
+          <ul>
+            <li>Swords</li>
+            <li>Axes</li>
+            <li>Maces</li>
+            <li>Spears</li>
+          </ul>
+        </div>
+
+        <div class="feature">
+          <span class="num">02</span>
+          <h3>Cooldowns</h3>
+          <div class="sub">Action-bar cooldowns</div>
+          <ul>
+            <li>Live weapon cooldowns shown on the action bar</li>
+            <li>Optimized for servers</li>
+          </ul>
+        </div>
+
+        <div class="feature">
+          <span class="num">03</span>
+          <h3>Unique Abilities</h3>
+          <div class="sub">Shift + right click to activate</div>
+          <ul>
+            <li>Dash</li>
+            <li>Gravity</li>
+            <li>Sweeper</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-inner">
+    <span class="display">Penguilz Dev</span>
+    <span>Built for competitive Minecraft servers.</span>
+  </div>
+</footer>
+
+<div class="modal" id="discordModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-box">
+    <button class="close" data-close-modal aria-label="Close">&times;</button>
+    <h3 id="modalTitle">Start your order</h3>
+    <p>Orders are handled through our Discord server.</p>
+    <ol class="steps">
+      <li>Join the Discord server</li>
+      <li>Make a Dev ticket</li>
+    </ol>
+    <p class="discord-line">Discord: <a href="https://discord.gg/pByJNDRC2" target="_blank" rel="noopener noreferrer">discord.gg/pByJNDRC2</a></p>
+    <button type="button" class="btn btn-primary" id="copyDiscord" style="width:100%;justify-content:center;">Join Discord</button>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var modal = document.getElementById('discordModal');
+    var openers = document.querySelectorAll('[data-open-modal]');
+    var closers = document.querySelectorAll('[data-close-modal]');
+
+    var audioCtx = null;
+    function playPop() {
+      try {
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        if (!audioCtx) audioCtx = new Ctx();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        var t = audioCtx.currentTime;
+        var osc = audioCtx.createOscillator();
+        var gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(520, t);
+        osc.frequency.exponentialRampToValueAtTime(980, t + 0.12);
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.18, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.2);
+      } catch (err) {}
+    }
+
+    function open() {
+      playPop();
+      modal.classList.add('open');
+      var c = modal.querySelector('.close');
+      if (c) c.focus();
+    }
+    function close() { modal.classList.remove('open'); }
+
+    var INVITE = 'https://discord.gg/pByJNDRC2';
+    var copyBtn = document.getElementById('copyDiscord');
+
+    function copyText(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+      }
+      return new Promise(function (resolve, reject) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        if (ok) resolve(); else reject(new Error('copy failed'));
+      });
+    }
+
+    copyBtn.addEventListener('click', function () {
+      var label = 'Join Discord';
+      copyText(INVITE).then(function () {
+        copyBtn.textContent = 'Link copied';
+      }).catch(function () {
+        copyBtn.textContent = 'Copy failed';
+      }).then(function () {
+        setTimeout(function () { copyBtn.textContent = label; }, 2000);
+      });
+    });
+
+    openers.forEach(function (b) { b.addEventListener('click', open); });
+    closers.forEach(function (b) { b.addEventListener('click', close); });
+    modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && modal.classList.contains('open')) close();
+    });
+  })();
+</script>
+
+</body>
+</html>
